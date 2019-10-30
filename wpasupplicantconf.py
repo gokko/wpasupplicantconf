@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+import json
 
 class ParseError(ValueError):
     pass
@@ -20,7 +20,7 @@ class WpaSupplicantConf:
         self._networks = OrderedDict()
 
         network = None
-        for line in lines:
+        for line in lines.split('\n'):
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -78,6 +78,20 @@ class WpaSupplicantConf:
                 f.write("    {}={}\n".format(name, value))
             f.write("}\n")
 
+    def toJson(self):
+        res= {}
+        for field in self.fields():
+            res[field]= self.fields()[field]
+        nets= []
+        for network in self.networks():
+            net= {}
+            net['ssid']= network
+            params= self.networks()[network]
+            for param in params:
+                net[param]= params[param]
+            nets.append(net)
+        res['networks']= nets
+        return json.dumps(res)
 
 def dequote(v):
     if len(v) < 2:
