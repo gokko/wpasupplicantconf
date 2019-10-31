@@ -68,6 +68,10 @@ class WpaSupplicantConf:
         self._networks.pop(ssid, None)
 
     def write(self, f):
+        needClose= False
+        if type(f) == str:
+            f= open(f, 'w')
+            needClose= True
         for name, value in self._fields.items():
             f.write("{}={}\n".format(name, value))
 
@@ -77,6 +81,8 @@ class WpaSupplicantConf:
             for name, value in info.items():
                 f.write("    {}={}\n".format(name, value))
             f.write("}\n")
+        if needClose:
+            f.close()
 
     def toJson(self):
         res= {}
@@ -92,6 +98,16 @@ class WpaSupplicantConf:
             nets.append(net)
         res['networks']= nets
         return json.dumps(res)
+
+    def readJson(self, inJson):
+        if type(inJson)== str:
+            inJson= json.loads(inJson)
+        for field in inJson:
+            if field != 'networks':
+                self._fields[field] = inJson[field]
+        for network in inJson['networks']:
+            ssid= network.pop('ssid', None)
+            self._networks[ssid]= network
 
 def dequote(v):
     if len(v) < 2:
