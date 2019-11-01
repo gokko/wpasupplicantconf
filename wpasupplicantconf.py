@@ -15,12 +15,23 @@ class WpaSupplicantConf:
     round-tripped through this class.
     """
 
-    def __init__(self, lines):
+    def __init__(self, inConf):
         self._fields = OrderedDict()
         self._networks = OrderedDict()
 
+        # incoming data is a dict (from json)
+        if type(inConf)== dict:
+            for field in inConf:
+                if field != 'networks':
+                    self._fields[field] = inConf[field]
+            for network in inConf['networks']:
+                ssid= network.pop('ssid', None)
+                self._networks[ssid]= network
+            return
+
+        # incoming data is a string (from file)
         network = None
-        for line in lines.split('\n'):
+        for line in inConf.split('\n'):
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -84,7 +95,7 @@ class WpaSupplicantConf:
         if needClose:
             f.close()
 
-    def toJson(self):
+    def toJsonDict(self):
         res= {}
         for field in self.fields():
             res[field]= self.fields()[field]
@@ -97,17 +108,7 @@ class WpaSupplicantConf:
                 net[param]= params[param]
             nets.append(net)
         res['networks']= nets
-        return json.dumps(res)
-
-    def readJson(self, inJson):
-        if type(inJson)== str:
-            inJson= json.loads(inJson)
-        for field in inJson:
-            if field != 'networks':
-                self._fields[field] = inJson[field]
-        for network in inJson['networks']:
-            ssid= network.pop('ssid', None)
-            self._networks[ssid]= network
+        return res
 
 def dequote(v):
     if len(v) < 2:
