@@ -44,6 +44,8 @@ class WpaSupplicantConf:
                 if ssid is None:
                     raise ParseError('missing "ssid" for network')
                 self._networks[dequote(ssid)] = network
+                if network['psk']:
+                    network['psk']= dequote(network['psk'])
                 network = None
                 continue
 
@@ -90,7 +92,10 @@ class WpaSupplicantConf:
             f.write("\nnetwork={\n")
             f.write('    ssid="{}"\n'.format(ssid))
             for name, value in info.items():
-                f.write("    {}={}\n".format(name, value))
+                if name== 'psk':
+                    f.write('    {}="{}"\n'.format(name, value))
+                else:
+                    f.write('    {}={}\n'.format(name, value))
             f.write("}\n")
         if needClose:
             f.close()
@@ -116,3 +121,4 @@ def dequote(v):
     if v.startswith('"') and v.endswith('"'):
         return v[1:-1]
     return v
+
